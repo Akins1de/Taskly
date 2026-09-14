@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="uk" translate="no" data-variant="mono-plus" data-theme="dark" data-layout="dash">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Taskly">
+  <title>Taskly</title>
+  <meta name="description" content="Спокійний темний список справ: календар, цілі дня, нотатки, історія.">
+  <meta name="theme-color" content="#000000">
+  <script>
+    /* Apply saved theme/layout before first paint to avoid a flash. */
+    (function () {
+      try {
+        var raw = localStorage.getItem('todo.calm.v1');
+        var ui = raw ? (JSON.parse(raw).ui || {}) : {};
+        document.documentElement.dataset.theme = ui.theme === 'light' ? 'light' : 'dark';
+        document.documentElement.dataset.layout = 'dash';
+      } catch (e) { /* defaults stay */ }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="skin.css">
+</head>
+<body>
+  <div class="shell" id="app">
+    <nav class="sidenav" aria-label="Навігація">
+      <div class="brand"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">Taskly</span></div>
+      <div class="sidenav__group">
+        <span class="eyebrow sidenav__label">Простір</span>
+        <button class="navlink" type="button" data-nav="day" aria-pressed="true"><i class="ic" aria-hidden="true">☼</i><span>Сьогодні</span><span class="navlink__count" id="nav-count-day"></span></button>
+        <button class="navlink" type="button" data-nav="all" aria-pressed="false"><i class="ic" aria-hidden="true">≡</i><span>Усі справи</span><span class="navlink__count" id="nav-count-all"></span></button>
+        <button class="navlink" type="button" data-nav="history" aria-pressed="false"><i class="ic" aria-hidden="true">◷</i><span>Історія</span></button>
+      </div>
+      <div class="sidenav__foot">
+        <div class="lang" id="lang">
+          <button class="lang__btn" id="lang-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Мова"><span class="lang__code" id="lang-code">UA</span><span class="lang__chev" aria-hidden="true">▾</span></button>
+          <div class="lang__menu" id="lang-menu" role="listbox" hidden>
+            <button class="lang__opt" type="button" role="option" data-lang="uk">Українська</button>
+            <button class="lang__opt" type="button" role="option" data-lang="en">English</button>
+            <button class="lang__opt" type="button" role="option" data-lang="ru">Русский</button>
+          </div>
+        </div>        <div class="sidenav__row">
+          <span class="sidenav__hint">Дані тільки у твоєму браузері.</span>
+          <button class="iconbtn" id="theme-btn" type="button" aria-label="Перемкнути тему">☀</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">
+          <div class="space" id="space">
+            <button class="space__btn" id="space-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Простори"><span id="space-name">Особисте</span><span class="lang__chev" aria-hidden="true">▾</span></button>
+            <div class="space__menu" id="space-menu" role="listbox" hidden></div>
+          </div>
+          <span aria-hidden="true">/</span><span class="crumb__cur" id="crumb">Сьогодні</span>
+        </div>
+        <label class="search" id="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input class="search__input" id="search" type="search" placeholder="Знайти в справах…" aria-label="Пошук" autocomplete="off">
+          <span class="search__kbd" aria-hidden="true">Ctrl K</span>
+          <button class="search__clear" id="search-clear" type="button" aria-label="Очистити пошук">✕</button>
+        </label>
+      </header>
+
+      <section class="hero">
+        <div class="hero__text">
+          <p class="eyebrow" id="date-eyebrow">—</p>
+          <h1 class="hero__title"><span id="hero-l1">Добрий день,</span><br><em id="hero-l2">без поспіху.</em></h1>
+          <p class="hero__sub" id="hero-sub">Усе важливе тут. Решта може почекати.</p>
+        </div>
+        <div class="hero__ring" id="hero-ring" role="img" aria-label="Виконано сьогодні">
+          <svg class="ring" viewBox="0 0 132 132" aria-hidden="true">
+            <defs>
+              <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" style="stop-color: var(--accent)"/>
+                <stop offset="1" style="stop-color: var(--accent-2)"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring__track" cx="66" cy="66" r="58"/>
+            <circle class="ring__fg" id="ring-fg" cx="66" cy="66" r="58" stroke-dasharray="364.4" stroke-dashoffset="364.4"/>
+          </svg>
+          <div class="ring__label"><span class="ring__pct" id="ring-pct">0%</span><span class="ring__cap">зроблено</span></div>
+        </div>
+      </section>
+
+      <section class="tiles" id="tiles" aria-label="Огляд">
+        <div class="tile tile--accent">
+          <div class="tile__label"><span class="eyebrow">Виконано сьогодні</span></div>
+          <div class="tile__val" id="t-done">0%</div>
+          <div class="tile__sub" id="t-done-sub"></div>
+        </div>
+        <div class="tile">
+          <div class="tile__label"><span class="eyebrow">Залишилось</span></div>
+          <div class="tile__val" id="t-active">0</div>
+          <div class="tile__sub" id="t-active-sub"></div>
+        </div>
+        <div class="tile">
+          <div class="tile__label"><span class="eyebrow">Серія</span></div>
+          <div class="tile__val" id="t-streak">0</div>
+          <div class="tile__sub" id="t-streak-sub"></div>
+        </div>
+        <div class="tile tile--accent2">
+          <div class="tile__label"><span class="eyebrow">Тиждень</span><span class="tile__sub" id="t-week-sub"></span></div>
+          <div class="tile__bars bars" id="t-week"></div>
+        </div>
+      </section>
+
+      <nav class="datebar" id="datebar" aria-label="Розділ">
+        <div class="datebar__title"><span id="date-title">Плани на день</span><span class="datebar__count" id="date-count">0</span></div>
+        <span class="datebar__date" id="date-full">—</span>
+        <div class="datebar__nav" id="datebar-nav">
+          <button class="date-nav" type="button" data-day="prev" aria-label="Попередній день">←</button>
+          <button class="date-today" id="date-today" type="button">Сьогодні</button>
+          <button class="date-nav" type="button" data-day="next" aria-label="Наступний день">→</button>
+        </div>
+        <div class="filters" id="filters" role="group" aria-label="Фільтри">
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">Всі <span class="count">0</span></button>
+          <button class="filter" type="button" data-filter="active" aria-pressed="false">Активні <span class="count">0</span></button>
+          <button class="filter" type="button" data-filter="done" aria-pressed="false">Виконані <span class="count">0</span></button>
+        </div>
+      </nav>
+
+      <section class="banner" id="overdue-banner" hidden>
+        <span class="banner__dot" aria-hidden="true"></span>
+        <span id="overdue-text">0 прострочених</span>
+        <div class="banner__actions">
+          <button class="btn" id="overdue-move" type="button">Перенести на сьогодні</button>
+          <button class="btn btn--ghost" id="overdue-show" type="button">Показати</button>
+        </div>
+      </section>
+
+      <section class="goals" id="goals" aria-label="Головне на день">
+        <div class="goals__head">
+          <h2 class="goals__title">Головне на день</h2>
+          <span class="goals__count" id="goals-count" aria-live="polite"></span>
+        </div>
+        <ol class="goals__list" id="goals-list"></ol>
+        <span class="day-stamp" id="day-stamp" hidden>День закрито</span>
+      </section>
+
+      <section class="note" id="note-wrap" aria-label="Нотатка дня">
+        <textarea class="note__area" id="note" rows="2" maxlength="2000" placeholder="Нотатка дня: думка, настрій, що запам'ятати…" aria-label="Нотатка дня"></textarea>
+      </section>
+
+      <form class="add-bar" id="add-form" autocomplete="off" novalidate>
+        <input class="add-input" id="add-input" type="text" maxlength="200" placeholder="Нова справа…" aria-label="Нова справа" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+        <div class="add-bar__opts">
+          <div class="swatches" role="radiogroup" aria-label="Мітка кольору">
+            <button class="swatch swatch--auto" type="button" role="radio" aria-checked="true" data-color="auto" aria-label="Випадкова мітка" title="Випадкова"></button>
+            <button class="swatch" type="button" role="radio" aria-checked="false" data-color="c1" style="--sw:var(--c1)" aria-label="Мітка 1"></button>
+            <button class="swatch" type="button" role="radio" aria-checked="false" data-color="c2" style="--sw:var(--c2)" aria-label="Мітка 2"></button>
+            <button class="swatch" type="button" role="radio" aria-checked="false" data-color="c3" style="--sw:var(--c3)" aria-label="Мітка 3"></button>
+            <button class="swatch" type="button" role="radio" aria-checked="false" data-color="c4" style="--sw:var(--c4)" aria-label="Мітка 4"></button>
+            <button class="swatch" type="button" role="radio" aria-checked="false" data-color="c5" style="--sw:var(--c5)" aria-label="Мітка 5"></button>
+          </div>
+          <button class="imp-toggle" id="add-important" type="button" aria-pressed="false">Важливо</button>
+        </div>
+        <button class="add-btn" type="submit">Додати</button>
+        <div class="add-hint" id="add-hint" hidden aria-live="polite"></div>
+      </form>
+
+      <div class="list-wrap" id="list-wrap"></div>
+
+      <section class="empty" id="empty" hidden>
+        <div class="empty__mark" aria-hidden="true">○</div>
+        <h2 class="empty__title" id="empty-title">День відкритий для нового.</h2>
+        <p class="empty__msg" id="empty-msg">Почни з однієї справи. Решта прийде сама.</p>
+      </section>
+
+      <section class="history" id="history" hidden aria-label="Історія">
+        <div class="hsummary" id="history-summary"></div>
+        <div id="history-list"></div>
+      </section>
+
+      <footer class="foot" id="foot" hidden>
+        <span id="counter" aria-live="polite">Залишилось 0 справ</span>
+        <button class="clear-btn" id="clear-btn" type="button" hidden>Очистити виконані</button>
+      </footer>
+
+    </main>
+
+    <aside class="context" id="context" aria-label="Календар і огляд">
+      <button class="iconbtn context__close" id="context-close" type="button" aria-label="Закрити">✕</button>
+      <section class="panel calendar" aria-label="Календар">
+        <div class="calendar__head">
+          <button class="cal-nav" type="button" data-cal="prev" aria-label="Попередній місяць">←</button>
+          <h2 class="calendar__month" id="cal-month" aria-live="polite">—</h2>
+          <button class="cal-nav" type="button" data-cal="next" aria-label="Наступний місяць">→</button>
+        </div>
+        <div class="calendar__weekdays" id="cal-weekdays" aria-hidden="true"></div>
+        <div class="calendar__grid" id="cal-grid"></div>
+        <button class="cal-today" id="cal-today" type="button">До сьогодні</button>
+      </section>
+      <section class="panel" aria-label="Далі">
+        <div class="panel__head"><h2 class="panel__title">Далі</h2><span class="eyebrow">наперед</span></div>
+        <div class="upnext" id="upnext-list"></div>
+      </section>
+      <section class="panel" aria-label="Тиждень">
+        <div class="panel__head"><h2 class="panel__title">Тиждень</h2><span class="eyebrow">закрито за день</span></div>
+        <div class="bars bars--tall" id="stats-bars"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="popover" id="popover" hidden role="dialog" aria-label="Перенести справу"></div>
+
+  <template id="task-tpl">
+    <li class="task" draggable="true">
+      <div class="card">
+        <span class="handle" aria-hidden="true" title="Перетягни, щоб змінити порядок">⋮</span>
+        <button class="check" type="button" role="checkbox" aria-checked="false" data-action="toggle">
+          <span class="check__box">
+            <svg class="check__svg" viewBox="0 0 28 28" aria-hidden="true"><path class="check__path" pathLength="30" d="M6 14.5 L12 20.5 L22 8"/></svg>
+          </span>
+        </button>
+        <div class="body">
+          <span class="text" title="Подвійний клік — редагувати"></span>
+          <div class="meta"></div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn icon-btn--imp" type="button" data-action="important" aria-pressed="false">!</button>
+          <button class="icon-btn icon-btn--sub" type="button" data-action="subtasks" aria-expanded="false">☷</button>
+          <button class="icon-btn icon-btn--rep" type="button" data-action="repeat" aria-pressed="false">↻</button>
+          <button class="icon-btn icon-btn--move" type="button" data-action="move">→</button>
+          <button class="icon-btn icon-btn--edit" type="button" data-action="edit">✎</button>
+          <button class="icon-btn icon-btn--del" type="button" data-action="delete">✕</button>
+        </div>
+      </div>
+      <div class="subs" hidden>
+        <ul class="subs__list"></ul>
+        <form class="subs__add" autocomplete="off">
+          <input class="subs__input" type="text" maxlength="200" placeholder="Підзадача…" aria-label="Нова підзадача">
+          <button class="subs__btn" type="submit" aria-label="Додати підзадачу">+</button>
+        </form>
+      </div>
+    </li>
+  </template>
+
+  <template id="sub-tpl">
+    <li class="sub">
+      <span class="sub__text"></span>
+      <button class="sub__del" type="button" data-sub-action="delete" aria-label="Видалити підзадачу">✕</button>
+    </li>
+  </template>
+
+  <script>window.CalmConfig = { showTime: true, labels: { uk: { c1: 'Робота', c2: 'Дім', c3: 'Навчання', c4: "Здоров'я", c5: 'Особисте' }, en: { c1: 'Work', c2: 'Home', c3: 'Study', c4: 'Health', c5: 'Personal' }, ru: { c1: 'Работа', c2: 'Дом', c3: 'Учёба', c4: 'Здоровье', c5: 'Личное' } } };</script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+  <script>
+    /* Offline cache + "add to home screen" work only when served over http(s), e.g. GitHub Pages. */
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
+</body>
+</html>
