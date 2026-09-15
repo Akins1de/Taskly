@@ -1,0 +1,229 @@
+/* ==========================================================================
+   Taskly PLUS — focus timer, year heatmap, voice input, ambient design.
+   Loaded after app.css + skin.css. Focus accent = --c5 (violet).
+   ========================================================================== */
+:root { --focus: var(--c5); --prog: 0%; }
+
+/* ---------- Ambient glow: hue drifts from blue to green as the day gets done ---------- */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.ambient i { position: absolute; width: 60vw; height: 60vw; max-width: 900px; max-height: 900px; border-radius: 50%; filter: blur(110px); opacity: .16; animation: amb-drift 34s ease-in-out infinite alternate; }
+.ambient i:nth-child(1) { left: -22vw; top: -28vw; background: color-mix(in oklab, var(--pos) var(--prog), var(--c3)); }
+.ambient i:nth-child(2) { right: -24vw; bottom: -30vw; background: color-mix(in oklab, var(--pos) var(--prog), var(--c5)); animation-delay: -14s; opacity: .12; }
+:root[data-theme="light"] .ambient i { opacity: .12; } :root[data-theme="light"] .ambient i:nth-child(2) { opacity: .08; }
+@keyframes amb-drift { to { transform: translate(8vw, 6vh) scale(1.15); } }
+
+/* ---------- Satisfying check: ripple ring ---------- */
+.check__box { position: relative; }
+.check.just-done .check__box::before { content: ''; position: absolute; inset: -2px; border-radius: inherit; border: 2px solid var(--pos); opacity: .9; animation: ripple .55s ease-out forwards; pointer-events: none; }
+@keyframes ripple { to { inset: -14px; opacity: 0; border-width: 1px; } }
+
+/* ---------- Tiles: soft spotlight under the cursor ---------- */
+.tile { position: relative; overflow: hidden; }
+.tile::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.09), transparent 60%); }
+.tile:hover::after { opacity: 1; }
+.tile--accent::after { background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgba(0,0,0,.1), transparent 60%); }
+
+/* ---------- All done: only the ring glows green; the greeting text stays grey ---------- */
+:root[data-alldone="1"] .ring__fg { filter: drop-shadow(0 0 8px var(--pos)); stroke: var(--pos); }
+
+/* ---------- Focus button + chip on the card ---------- */
+.icon-btn--focus { font-size: 11px; }
+.icon-btn--focus[aria-pressed="true"] { color: var(--focus); opacity: 1; }
+.task--focus > .card { box-shadow: 0 0 0 1px color-mix(in srgb, var(--focus) 55%, transparent), 0 0 28px color-mix(in srgb, var(--focus) 22%, transparent); }
+.task--focus .actions { opacity: 1; }
+.chip--spent { color: var(--text-2); background: color-mix(in srgb, var(--focus) 14%, transparent); font-variant-numeric: tabular-nums; }
+.task--focus .chip--spent { color: var(--focus); }
+
+/* ---------- Focus bar (bottom pill) ---------- */
+.fbar {
+  position: fixed; left: 50%; bottom: 24px; translate: -50% 0; z-index: 45;
+  display: flex; align-items: center; gap: 10px; max-width: calc(100% - 32px); padding: 8px 10px 8px 12px;
+  border-radius: 999px; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--bg-2) 82%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.2);
+  animation: fbar-in .35s cubic-bezier(.2,1.2,.4,1) both;
+}
+:root[data-theme="light"] .fbar { box-shadow: 0 18px 50px rgba(0,0,0,.18); }
+.fbar--out { animation: fbar-out .25s ease-in forwards; }
+@keyframes fbar-in { from { translate: -50% 30px; opacity: 0; } to { translate: -50% 0; opacity: 1; } }
+@keyframes fbar-out { to { translate: -50% 30px; opacity: 0; } }
+.fbar__ring { width: 30px; height: 30px; flex: none; border-radius: 50%; background: conic-gradient(var(--focus) calc(var(--p, 0) * 1%), var(--bg-4) 0); position: relative; cursor: pointer; }
+.fbar__ring::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--bg-2); }
+.fbar--paused .fbar__ring { opacity: .5; }
+.fbar--over .fbar__ring { background: var(--pos); animation: pulse-ring 1.2s ease-in-out infinite; }
+@keyframes pulse-ring { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--pos) 25%, transparent); } }
+.fbar__text { min-width: 0; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+.fbar__text:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fbar__time { font-family: var(--font-mono); font-size: 15px; font-weight: 500; letter-spacing: .02em; font-variant-numeric: tabular-nums; min-width: 52px; text-align: center; }
+.fbar--over .fbar__time { color: var(--pos); }
+.fbar__btn { min-width: 30px; height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-3); color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; display: inline-grid; place-items: center; transition: background .15s, transform .12s; }
+.fbar__btn:hover { background: var(--bg-4); }
+.fbar__btn:active { transform: scale(.94); }
+.fbar__btn--done { color: var(--pos); }
+.fbar__btn--stop { color: var(--text-3); }
+body.has-fbar .toast { bottom: 88px; }
+@media (max-width: 700px) {
+  .fbar { bottom: 84px; padding: 6px 8px 6px 10px; gap: 8px; }
+  .fbar__text { max-width: 30vw; font-size: 13px; }
+  body.has-fbar .toast { bottom: 148px; }
+}
+
+/* ---------- Focus mode (full screen) ---------- */
+.fmode { position: fixed; inset: 0; z-index: 65; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); animation: fmode-in .35s ease both; }
+.fmode--out { animation: fmode-out .25s ease-in forwards; }
+@keyframes fmode-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fmode-out { to { opacity: 0; } }
+.fmode__glow { position: absolute; width: 60vmin; height: 60vmin; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--focus) 35%, transparent), transparent 65%); filter: blur(30px); animation: breathe 6s ease-in-out infinite; pointer-events: none; }
+.fmode--over .fmode__glow { background: radial-gradient(circle, color-mix(in srgb, var(--pos) 40%, transparent), transparent 65%); }
+.fmode__box { position: relative; display: grid; justify-items: center; gap: 18px; width: min(100%, 520px); text-align: center; }
+.fmode__ring { width: min(64vmin, 300px); height: min(64vmin, 300px); border-radius: 50%; display: grid; place-items: center; position: relative; background: conic-gradient(var(--focus) calc(var(--p, 0) * 1%), color-mix(in srgb, var(--text) 10%, transparent) 0); animation: breathe 6s ease-in-out infinite; transition: background .5s linear; }
+.fmode__ring::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--bg); }
+.fmode--over .fmode__ring { background: var(--pos); }
+.fmode--paused .fmode__ring { animation: none; opacity: .75; }
+@keyframes breathe { 50% { transform: scale(1.035); } }
+.fmode__time { position: relative; z-index: 1; font-family: var(--font-mono); font-size: clamp(44px, 12vmin, 72px); font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+.fmode__cap { position: relative; z-index: 1; margin-top: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); }
+.fmode__task { font-size: clamp(18px, 3vw, 24px); font-weight: 700; letter-spacing: -.02em; max-width: 34ch; text-wrap: balance; }
+.fmode__sub { font-size: 13px; color: var(--text-3); }
+.fmode__ctl { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.fmode__btn { min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s, transform .12s; }
+.fmode__btn:hover { background: var(--bg-3); }
+.fmode__btn:active { transform: scale(.96); }
+.fmode__btn--primary { background: var(--text); color: var(--bg); border-color: transparent; }
+.fmode__btn--primary:hover { opacity: .88; background: var(--text); }
+.fmode__presets { display: flex; gap: 6px; }
+.fmode__preset { min-height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-2); font: inherit; font-size: 12.5px; cursor: pointer; }
+.fmode__preset[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: transparent; }
+.fmode__close { position: absolute; top: 18px; right: 18px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg-2); color: var(--text-2); font: inherit; font-size: 16px; cursor: pointer; display: grid; place-items: center; }
+.fmode__close:hover { color: var(--text); background: var(--bg-3); }
+
+/* ---------- Year heatmap (history view) ---------- */
+.heat { margin-bottom: 18px; padding: 16px 18px 14px; border-radius: var(--radius); background: var(--bg-2); border: 1px solid var(--line); }
+.heat__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.heat__title { margin: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); }
+.heat__stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-3); }
+.heat__stats b { color: var(--text); font-weight: 600; }
+.heat__scroll { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.heat__months { position: relative; height: 14px; margin-bottom: 4px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.heat__month { position: absolute; top: 0; left: calc(var(--w) * 14px); white-space: nowrap; }
+.heat__grid { display: grid; grid-template-rows: repeat(7, 11px); grid-auto-flow: column; grid-auto-columns: 11px; gap: 3px; width: max-content; }
+.heat__cell { width: 11px; height: 11px; border-radius: 2px; background: var(--bg-4); border: 0; padding: 0; cursor: pointer; transition: transform .12s, outline-color .12s; outline: 1px solid transparent; animation: cell-in .4s ease both; animation-delay: calc(var(--i) * 4ms); }
+.heat__cell--1 { background: color-mix(in srgb, var(--pos) 28%, var(--bg-4)); }
+.heat__cell--2 { background: color-mix(in srgb, var(--pos) 50%, var(--bg-4)); }
+.heat__cell--3 { background: color-mix(in srgb, var(--pos) 74%, var(--bg-4)); }
+.heat__cell--4 { background: var(--pos); box-shadow: 0 0 8px color-mix(in srgb, var(--pos) 50%, transparent); }
+.heat__cell--today { outline-color: var(--text); }
+.heat__cell--future { opacity: .35; cursor: default; }
+.heat__cell:hover { transform: scale(1.4); outline-color: var(--text-2); z-index: 1; position: relative; }
+@keyframes cell-in { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+.heat__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 11.5px; color: var(--text-3); }
+.heat__legend { display: inline-flex; align-items: center; gap: 3px; }
+.heat__legend i { width: 10px; height: 10px; border-radius: 2px; background: var(--bg-4); }
+.heat__legend i:nth-child(2) { background: color-mix(in srgb, var(--pos) 28%, var(--bg-4)); } .heat__legend i:nth-child(3) { background: color-mix(in srgb, var(--pos) 50%, var(--bg-4)); } .heat__legend i:nth-child(4) { background: color-mix(in srgb, var(--pos) 74%, var(--bg-4)); } .heat__legend i:nth-child(5) { background: var(--pos); }
+.hsummary { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 600px) { .hsummary { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Voice input ---------- */
+.mic { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg-3); color: var(--text-2); cursor: pointer; display: grid; place-items: center; position: relative; transition: background .15s, color .15s, transform .12s; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.mic--on { transform: scale(1.12); }
+.mic:hover { background: var(--bg-4); color: var(--text); }
+.mic:active { transform: scale(.94); }
+.mic svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mic--on { color: var(--neg); border-color: var(--neg); background: color-mix(in srgb, var(--neg) 12%, transparent); }
+.mic--on::before { content: ''; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid var(--neg); animation: mic-pulse 1.2s ease-out infinite; }
+@keyframes mic-pulse { to { inset: -10px; opacity: 0; } }
+.add-input--listening::placeholder { color: var(--neg); }
+@media (max-width: 600px) { .mic { width: 32px; height: 32px; } }
+
+/* ==========================================================================
+   Design round 2: accent colours, time-of-day tint, streak flame, sparklines,
+   focus aurora, modern "day closed" seal, drawn empty state, drag polish.
+   ========================================================================== */
+
+/* ---------- Accent = the classic mono white/black (used by sparklines and drag lines) ---------- */
+:root { --acc: var(--text); --acc-ink: var(--bg); }
+
+/* ---------- Time-of-day tint feeds the ambient blobs (colours set by plus.js) ---------- */
+.ambient i:nth-child(1) { background: color-mix(in oklab, var(--pos) var(--prog), var(--tod, var(--c3))); }
+.ambient i:nth-child(2) { background: color-mix(in oklab, var(--pos) var(--prog), var(--tod2, var(--c5))); }
+
+/* ---------- Streak flame ---------- */
+.flame { position: absolute; right: 18px; bottom: 16px; width: 26px; height: 34px; transform: scale(var(--fs, 1)); transform-origin: bottom center; pointer-events: none; filter: drop-shadow(0 0 10px rgba(255, 140, 50, .45)); }
+.flame i { position: absolute; left: 50%; bottom: 0; border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%; transform: translateX(-50%); transform-origin: bottom center; animation: flicker 1.15s ease-in-out infinite; }
+.flame i:nth-child(1) { width: 26px; height: 34px; background: linear-gradient(to top, #FF5A00, #FFA53C 55%, rgba(255, 200, 100, 0)); }
+.flame i:nth-child(2) { width: 15px; height: 22px; background: linear-gradient(to top, #FFD166, #FFF4C2 65%, rgba(255, 244, 194, 0)); animation-delay: -.45s; }
+.flame i:nth-child(3) { width: 7px; height: 11px; background: #FFFFFF; opacity: .95; animation-delay: -.8s; }
+@keyframes flicker { 0%, 100% { transform: translateX(-50%) scaleY(1) skewX(0); } 30% { transform: translateX(-53%) scaleY(1.09) skewX(-4deg); } 60% { transform: translateX(-47%) scaleY(.93) skewX(4deg); } }
+.flame--out { filter: none; }
+.flame--out i { animation: smoke 1.8s ease-out forwards; background: #9A9A9A !important; }
+@keyframes smoke { to { transform: translate(-50%, -34px) scale(1.5); opacity: 0; filter: blur(8px); } }
+.tile--accent .flame { filter: drop-shadow(0 0 10px rgba(255, 140, 50, .6)); }
+
+/* ---------- Sparklines (replace the week bars) ---------- */
+.spark { display: block; width: 100%; height: 100%; overflow: visible; }
+.spark__area { fill: url(#spark-grad); }
+.spark__line { fill: none; stroke: var(--acc); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.spark__pt { fill: var(--bg-2); stroke: var(--text-3); stroke-width: 1.5; }
+.spark__pt--on { stroke: var(--acc); }
+.spark__pt--today { fill: var(--pos); stroke: var(--pos); filter: drop-shadow(0 0 5px var(--pos)); }
+.spark__g text { font-family: var(--font-mono); font-size: 10px; fill: var(--text); opacity: 0; transition: opacity .15s; pointer-events: none; }
+.spark__g:hover text { opacity: 1; }
+.spark__g:hover circle { r: 4; }
+.spark__wd { font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; fill: var(--text-3); text-transform: uppercase; }
+.tile--accent .spark__line { stroke: var(--acc-ink); } .tile--accent .spark__pt--on { stroke: var(--acc-ink); } .tile--accent .spark__pt { fill: var(--acc); } .tile--accent .spark__g text { fill: var(--acc-ink); }
+.tile .spark__pt { fill: var(--bg); }
+
+/* ---------- Focus mode: aurora that warms up in the last minute ---------- */
+.fmode__aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.fmode__aurora i { position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%; filter: blur(100px); opacity: .28; mix-blend-mode: screen; animation: fa-drift var(--d, 22s) ease-in-out infinite alternate; transition: opacity 1s, background 2s; }
+.fmode__aurora i:nth-child(1) { left: -18vmax; top: -22vmax; background: var(--focus); }
+.fmode__aurora i:nth-child(2) { right: -20vmax; bottom: -24vmax; background: var(--c3); --d: 28s; animation-delay: -12s; }
+.fmode--final .fmode__aurora i { animation-duration: 5s; opacity: .45; }
+.fmode--final .fmode__aurora i:nth-child(1) { background: #FFB347; }
+.fmode--final .fmode__aurora i:nth-child(2) { background: #FF6A00; }
+.fmode--final .fmode__ring { animation-duration: 2.2s; }
+.fmode--over .fmode__aurora i { background: var(--pos) !important; animation-duration: 14s; opacity: .32; }
+.fmode--paused .fmode__aurora i { animation-play-state: paused; opacity: .16; }
+@keyframes fa-drift { to { transform: translate(16vmax, 12vmax) scale(1.25); } }
+:root[data-theme="light"] .fmode__aurora i { mix-blend-mode: multiply; opacity: .16; }
+
+/* ---------- "Day closed": light sweep, glow pulse, seal pill ---------- */
+.goals { overflow: hidden; }
+.goals--closed { border-color: color-mix(in srgb, var(--pos) 35%, var(--line)); }
+.goals--closed .goals__count { visibility: hidden; } /* the seal pill sits where the "2 / 2" counter was */
+.day-stamp { top: 10px; right: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 7px; border-radius: 999px; background: color-mix(in srgb, var(--pos) 14%, transparent); color: var(--pos); border: 1px solid color-mix(in srgb, var(--pos) 45%, transparent); font-size: 12px; font-weight: 600; box-shadow: 0 0 22px color-mix(in srgb, var(--pos) 22%, transparent); animation: seal-in .55s cubic-bezier(.2, 1.4, .4, 1) both; }
+.day-stamp::before { content: '\2713'; width: 16px; height: 16px; border-radius: 50%; background: var(--pos); color: #000; font-size: 10px; font-weight: 800; display: grid; place-items: center; }
+@keyframes seal-in { from { transform: scale(.55) translateY(-8px); opacity: 0; } 60% { transform: scale(1.07); opacity: 1; } to { transform: none; opacity: 1; } }
+/* The "day complete" celebration: fires when every task AND every goal of the day is done */
+.goals--seal, .tiles--seal { animation: seal-glow 1.5s ease-out both; }
+.list-wrap.list--seal { overflow: hidden; }
+.goals--seal::after, .list--seal::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: linear-gradient(105deg, transparent 32%, color-mix(in srgb, var(--pos) 26%, transparent) 50%, transparent 68%); transform: translateX(-130%); animation: sweep 1s ease-out .05s forwards; }
+.list--seal::after { animation-delay: .25s; }
+.ring--seal { animation: ring-pop 1s cubic-bezier(.2, 1.4, .4, 1); }
+.ring--seal .ring__fg { stroke: var(--pos); filter: drop-shadow(0 0 14px var(--pos)); }
+@keyframes ring-pop { 35% { transform: scale(1.1); } }
+
+/* Calendar: only the current month's days; the leading slots keep the weekday alignment */
+.cal-day--other { visibility: hidden; pointer-events: none; }
+@keyframes sweep { to { transform: translateX(130%); } }
+@keyframes seal-glow { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pos) 55%, transparent); } 45% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--pos) 0%, transparent), 0 0 44px color-mix(in srgb, var(--pos) 35%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* ---------- Empty state draws itself ---------- */
+.empty__mark { width: 120px; height: 72px; border-radius: 0; background: none; color: inherit; font-size: 0; }
+.empty__art { width: 120px; height: 72px; overflow: visible; }
+.empty__art path, .empty__art circle { fill: none; stroke: var(--text-2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .9s var(--ease) forwards; animation-delay: calc(var(--i, 0) * .1s); }
+.empty__art .acc { stroke: var(--acc); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* ---------- Drag & drop polish ---------- */
+.task.dragging { opacity: 1; }
+.task.dragging > .card { opacity: .5; transform: rotate(-1.2deg) scale(1.01); border-style: dashed; border-color: color-mix(in srgb, var(--acc) 45%, var(--line-2)); }
+.task::before, .task::after { left: 4px; right: 4px; height: 3px; background: linear-gradient(90deg, transparent, var(--acc) 18%, var(--acc) 82%, transparent); box-shadow: 0 0 12px color-mix(in srgb, var(--acc) 60%, transparent); }
+.drag-ghost { position: fixed; top: -2000px; left: -2000px; z-index: -1; pointer-events: none; transform: rotate(-2deg); box-shadow: 0 24px 50px rgba(0, 0, 0, .45); border: 1px solid color-mix(in srgb, var(--acc) 60%, var(--line-2)) !important; background: var(--bg-3) !important; }
+.drag-ghost .actions, .drag-ghost .handle { display: none; }
+.cal-day--drop, .cal-day--drop:hover { background: var(--acc); color: var(--acc-ink); }
+
+@media (max-width: 600px) { .flame { right: 12px; bottom: 12px; --fs: .8; } }
+@media (prefers-reduced-motion: reduce) {
+  .ambient i, .fmode__ring, .fmode__glow, .fmode__aurora i, .heat__cell, .fbar, .fmode, .flame i, .day-stamp, .goals--seal, .goals--seal::after, .empty__art path, .empty__art circle { animation: none !important; }
+  .empty__art path, .empty__art circle { stroke-dashoffset: 0; }
+}

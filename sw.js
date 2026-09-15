@@ -1,6 +1,6 @@
 /* Service worker: cache the app shell so it opens offline (only active over http/https). */
-const CACHE = 'taskly-v1';
-const ASSETS = ['./', './index.html', './app.css', './skin.css', './app.js', './i18n.js', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'taskly-v2';
+const ASSETS = ['./', './index.html', './app.css', './skin.css', './plus.css', './app.js', './i18n.js', './plus.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

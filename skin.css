@@ -29,12 +29,13 @@
   --shadow: none;
 }
 :root[data-theme="light"] {
-  --bg: #FFFFFF;
-  --bg-2: #F7F7F7;
-  --bg-3: #EFEFEF;
-  --bg-4: #E2E2E2;
-  --line: rgba(0, 0, 0, .1);
-  --line-2: rgba(0, 0, 0, .2);
+  /* Light grey ground, slightly lighter cards on top (mirrors the dark theme's depth). */
+  --bg: #F2F2F0;
+  --bg-2: #FAFAF8;
+  --bg-3: #ECECEA;
+  --bg-4: #DFDFDC;
+  --line: rgba(0, 0, 0, .09);
+  --line-2: rgba(0, 0, 0, .18);
   --text: #000000;
   --text-2: rgba(0, 0, 0, .6);
   --text-3: rgba(0, 0, 0, .4);
